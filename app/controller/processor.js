@@ -77,26 +77,29 @@ function injectIntoFile(req, res, functionNumber, amount, stripeProcessingContro
 			var result = data.replace(/amount: 999/g, 'amount: ' + amount);
 			var functionName = 'exports.stripeProcess_' + functionNumber;
 			result = result.replace(/exports.stripeProcess/g, functionName);
+			if(functionNumber == 0){
+				result = 'var stripe = require("stripe")("sk_test_BQokikJOvBiI2HlWgH4olfQ2");\n' + result;
+			}
 			fs.appendFile("./app/controller/" + stripeProcessingController, result, function(err){
 				if (err) console.error("Big no");
 				else {					
-					if(functionNumber == 0){	
-						var stripeFileAppend = "\n var stripeFile = require('./app/controller/stripe.controller.js');\n";
-						stripeFileAppend += "require('./app/routes/stripe.routes.js')(app);\n";
+					if(functionNumber == 0){
+						var stripeFileAppend = "require('./app/routes/stripe.routes.js')(app);\n";
 						fs.appendFile('server.js', stripeFileAppend, function(err){
 							if(err) console.error("in append server.js ");				
 						});
 					}
 					var endpointFunction = 'stripeFile.stripeProcess_' + functionNumber;
-					fs.writeFile('./app/routes/stripe.routes.txt', "app.post('/" + endPoint + "', " + endpointFunction + ");\n", function(err){
+					fs.appendFile('./app/routes/stripe.routes.txt', "app.post('/" + endPoint + "', " + endpointFunction + ");\n", function(err){
 						if(err) console.error('error in writing stripe.txt');
 						else fs.readFile('./app/routes/stripe.routes.txt', 'utf-8', function(err, data){
 							if(err) console.error('error reading stripe.txt');
 							else {
-								var result = 'module.exports = function(app) { \n' + data + '}';
+								var result = "\n var stripeFile = require('../controller/stripe.controller.js');\n";
+								result += 'module.exports = function(app) { \n' + data + '}';
 								fs.writeFile('./app/routes/stripe.routes.js', result, function(err){
 									if(err) console.error("Error writing stripe.routes.js");
-									else res.josn({});
+									else res.json({});
 								});
 							}
 						});
@@ -115,7 +118,7 @@ exports.injectCode = function(req, res){
 	console.log("Page " +  req.body['currentPage']);
 	var myRegex = new RegExp("id\s*=\s*" + "\"" + req.body['currentId'] + "\"");
 
-	var codeSnippet = "<form action=\"" + req.body['routeTo'] + "\" method=\"POST\">" +
+	var codeSnippet = "<form action=\"" + req.body['endpoint'] + "\" method=\"POST\">" +
    " <script " +
     " src=\"https://checkout.stripe.com/checkout.js\" class=\"stripe-button\" " + 
     " data-key=" + req.body['apiKey'] + " " + 
@@ -179,3 +182,7 @@ exports.injectCode = function(req, res){
 exports.paymentPage = function(req, res){
 	res.render('payment', {});
 };
+
+exports.deploy = function(req, res){
+	
+}

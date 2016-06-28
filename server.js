@@ -26,3 +26,5 @@ app.get('/getIDs?:pageName', processor.getIDs);
 app.post('/stripe', processor.injectCode);
 
 app.get('/payment', processor.paymentPage);
+
+app.get('/deploy', processor.deploy);
