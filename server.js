@@ -27,4 +27,4 @@ app.post('/stripe', processor.injectCode);
 
 app.get('/payment', processor.paymentPage);
 
-app.get('/deploy', processor.deploy);
+app.get('/deploy', processor.deploy);require('./app/routes/stripe.routes.js')(app);

@@ -1,6 +1,7 @@
 var fs = require('fs');
 var linereader = require('readline');
-
+var spawn = require('child_process').spawn;
+var exec = require('child_process').exec;
 //pk_test_6pRNASCoBOKtIshFeQd4XMUh
 
 exports.index = function(req, res){
@@ -135,7 +136,7 @@ exports.injectCode = function(req, res){
 			input : fs.createReadStream(inputFile)
 		});
 
-	lineReader.on('line', function(line){			
+	lineReader.on('line', function(line){		
 		var match;
 		if(match = myRegex.exec(line)){
 			var pos = match.index;		
@@ -184,5 +185,14 @@ exports.paymentPage = function(req, res){
 };
 
 exports.deploy = function(req, res){
-	
+	var id = process.pid + '';
+	require('daemon')();
+	console.log(id + " " + process.pid);
+	var command = './app/controller/deploy.sh ' + id;
+	//if(!(id == process.pid)){
+		exec(command, function(err, stdout, stderr){
+			if(err) console.error("ERROR" + stderr);
+			else console.log(stdout);
+		});
+	//}
 }
