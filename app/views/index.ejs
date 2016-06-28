@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Hello</title>
+	<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+  	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+  	<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+  	<style type="text/css">
+	  	#stripeform {
+	  		display: none;
+	  	}
+  	</style>
+  	<script type="text/javascript">
+  	
+  	var currentPage;  	
+  	var idArray;
+  	var currentId;
+
+  	function submitForm(event){
+  		var stripeform = document.getElementById('form');
+  		switch (event.target.id){
+  			case "submit" :
+  				submitStripeForm();
+  				break;
+  			case "clear" :
+  				stripeform.reset();
+  				break;
+  		}
+  	}
+
+  	function getPageIds(event){
+		//alert("Filename is " + event.target.id);
+		var url = "http://localhost:50000/getIDs?page=" + event.target.id;		
+		currentPage = event.target.id;
+		$.getJSON(url, function(data){			
+			var tableOfId = document.getElementById("tableOfId");
+			if(tableOfId.hasChildNodes()){
+				while (tableOfId.firstChild) {
+				    tableOfId.removeChild(tableOfId.firstChild);
+				}
+			}
+			$.each(data, function(i, field){				
+				idArray = field.toString().split(",");
+				for(var j = 0; j < idArray.length; j++){
+					var row = tableOfId.insertRow(j);
+					row.id = idArray[j];
+					var col = row.insertCell(0);
+					row.onclick = function createStripeForm(){
+  						var stripeform = document.getElementById('stripeform');
+  						stripeform.style.display = "block";  						
+  						currentId = idArray[this.rowIndex];
+  						//alert("current id " + currentId);
+  					};
+					col.innerHTML = idArray[j];
+				}				
+			});			
+		});
+	}  	
+
+	function isEmpty(item){
+		return item.val() == "" ? true : false;
+	}
+
+	function submitStripeForm(){
+		var apiKey = $("#Apikey").val();
+		var amount = $("#Amount").val();
+		var name = $("#Name").val();
+		var description = $("#Description").val();
+		var imagePath = $("#Imagepath").val();
+		var routeTo = $("#files").find(":selected").text();
+		var endpoint = $("#Endpoint").val();		
+		//if(!(isEmpty(apiKey) && isEmpty(amount) && isEmpty(name) && isEmpty(description) && isEmpty(imagePath))){
+			alert('sent');
+			$.post("http://localhost:50000/stripe", {
+				apiKey : apiKey,
+				amount : amount,
+				name : name,
+				description : description,
+				imagePath : imagePath,
+				currentPage : currentPage,
+				currentId : currentId,
+				routeTo : routeTo,
+				endpoint : endpoint
+			}).success(function(){
+				alert("success");
+			});
+		//}
+
+	}
+
+  	</script>
+	
+</head>
+<body>
+
+	<% if(error){ %>
+		<div class="alert alert-danger" role="alert">
+  			<strong>Oh snap!</strong> <%= error %>
+		</div>
+	<% } else {%>
+
+		<div class="container">
+			<div class="row">
+				<div class="col-md-8 col-md-offset-2">
+					<div class="panel panel-default">
+					  <div class="panel-body">
+					    File List
+					  </div>
+					</div>
+					<table class="table table-striped">
+						<tbody>
+							<% for(var i = 0; i < files.length; i++){ %>
+								<tr>
+									<td id="<%= files[i] %>" onclick="getPageIds(event)"><%= files[i]; %>
+									</td>
+								</tr>
+							<% } %>
+						</tbody>
+					</table>
+				</div>
+			</div>
+			<div class="row">  <!-- For list of ids on selected page -->
+				<div class="col-md-8 col-md-offset-2">
+					<div class="panel panel-default">
+						<div class="panel-body">
+						    ID List
+						  </div>
+					</div>
+					<table id="tableOfId" class="table table-striped">						
+					</table>
+				</div>
+			</div>
+			<div class="row" id="stripeform">
+				<div class="col-md-8 col-md-offset-2">
+					<div class="panel panel-default">
+						<div class="panel-body">
+						    Stripe Form
+						  </div>
+					</div>
+					<form id="form">
+					  <fieldset class="form-group">
+					    <label for="api-key">Api Key</label>
+					    <input type="text" class="form-control" id="Apikey" placeholder="Enter API Key">
+					  </fieldset>
+					  <fieldset class="form-group">
+					    <label for="Amount">Amount</label>
+					    <input type="text" class="form-control" id="Amount" placeholder="Amount">
+					  </fieldset>
+					  <fieldset class="form-group">
+					    <label for="Name">Name</label>
+					    <input type="text" class="form-control" id="Name" placeholder="Name">
+					  </fieldset>
+					  <fieldset class="form-group">
+					    <label for="Description">Description</label>
+					    <input type="text" class="form-control" id="Description" placeholder="Description">
+					  </fieldset>
+					  <fieldset class="form-group">
+					    <label for="Image Path">Image Path</label>
+					    <input type="text" class="form-control" id="Imagepath" placeholder="Image Path">
+					  </fieldset>
+					  <fieldset class="form-group">
+					    <label for="Endpoint">URL Hook</label>
+					    <input type="text" class="form-control" id="Endpoint" placeholder="URL Endpoint">
+					  </fieldset>
+					  <select id="files">
+					  	<% for(var i = 0; i < files.length; i++){ %>
+							<option value="<%= files[i] %>"><%= files[i]; %></option>							
+						<% } %>
+							<option value="/stripeProcess">stripeProcess</option>
+					  </select>
+					  <br>
+					  <br>
+					  <br>
+					  <button id="submit" onclick="submitForm(event)" type="button" class="btn btn-primary">Submit</button>		  
+					  <button id="clear" onclick="submitForm(event)" type="button" class="btn btn-primary">Clear</button>
+					</form>
+				</div>				
+			</div>
+		</div>
+
+	<% } %>
+
+</body>
+</html>
