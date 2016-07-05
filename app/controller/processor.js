@@ -189,10 +189,11 @@ exports.deploy = function(req, res){
 	require('daemon')();
 	console.log(id + " " + process.pid);
 	var command = './app/controller/deploy.sh ' + id;
+	spawn(command);
 	//if(!(id == process.pid)){
-		exec(command, function(err, stdout, stderr){
+	/*	exec(command, function(err, stdout, stderr){
 			if(err) console.error("ERROR" + stderr);
 			else console.log(stdout);
-		});
+		});*/
 	//}
 }
